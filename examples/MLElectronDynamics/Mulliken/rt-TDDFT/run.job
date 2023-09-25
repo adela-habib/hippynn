@@ -1,0 +1,13 @@
+#!/bin/bash
+### Begin BSUB Options
+#SBATCH -t 16:00:00
+#SBATCH -N 10
+#SBATCH --ntasks-per-node=4
+#SBATCH -p standard
+#SBATCH -A w23_ml4chem
+cd ${SLURM_SUBMIT_DIR}
+source ~/.bashrc
+conda activate ch-GPAWTest
+
+#python gs.py
+mpirun -n 40 python td-time-Emag.py #gs.py #get_el_pop_time.py 50 100 2 
