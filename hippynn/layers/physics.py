@@ -274,3 +274,70 @@ class CombineEnergy(torch.nn.Module):
         mol_energy = self.summer(total_atom_energy, mol_index, n_molecules)
         
         return mol_energy, total_atom_energy
+
+####TODO ZBLPotential
+class ZBLPotential(torch.nn.Module):
+    expo_a = 0.23
+    a0 = 0.46850;
+    coeff = torch.tensor([0.02817, 0.28022, 0.50986, 0.18175])  # for phi(xij/a)
+    expo = torch.tensor([0.20162, 0.40290, 0.94229, 3.19980])
+
+    def __init__(self, r_inner, r_outer):
+        super().__init__()
+        self.r_inner = r_inner
+        self.r_outer = r_outer
+
+    def _Phi(self, r, a):
+        phi = 0
+        for i in range((self.coeff).shape[0]):
+            phi += self.coeff[i] * torch.exp(-self.expo[i] * r / a)
+        return phi
+
+    def _dPhidr(self, r, a):
+        dPhir = 0
+        for i in range((self.coeff).shape[0]):
+            dPhir += (self.coeff[i] * (-self.expo[i] / a) * torch.exp(-self.expo[i] * r / a))
+        return dPhir
+
+    def _d2Phidr2(self, r, a):
+        dPhir2 = 0
+        for i in range((self.coeff).shape[0]):
+            dPhir2 += (self.coeff[i] * ((self.expo[i] / a) ** 2) * torch.exp(-self.expo[i] * r / a))
+        return dPhir2
+
+    def _ZBLE(self, r, a):
+        return (1 / r) * (self._Phi(r, a))
+
+    def _dZBLEdr(self, r, a):
+        Phi = self._Phi(r, a)
+        dPhi = self._dPhidr(r, a)
+        return 1 / r * (-Phi / r + dPhi)
+
+    def _d2ZBLEdr2(self, r, a):
+        Phi = self._Phi(r, a)
+        dPhi = self._dPhidr(r, a)
+        dPhi2 = self._d2Phidr2(r, a)
+        return 1 / (r) * ((+2 / r ** 2) * Phi - (2 / r * dPhi) + dPhi2)
+
+    def forward(self, r, zi, zj):
+        # e*e/(4*pi*epsilon0)  =  14.399645478425668  eV/Ang #1.112 650 055 45 x 10-10 F/m
+        prefixConst = 14.399645478425668
+        zizj = prefixConst * zi * zj
+        a = self.a0 / (zi ** self.expo_a + zj ** self.expo_a)
+
+        # make the switching function
+        C = -self._ZBLE(self.r_outer, a) + 0.5 * (self.r_outer - self.r_inner) * self._dZBLEdr(self.r_outer, a) - (
+                    1 / 12.) * ((self.r_outer - self.r_inner) ** 2) * self._d2ZBLEdr2(self.r_outer, a)
+        B = (2 * self._dZBLEdr(self.r_outer, a) - (self.r_outer - self.r_inner) * self._d2ZBLEdr2(self.r_outer, a)) / (
+                    self.r_outer - self.r_inner) ** 3
+        A = (-3 * self._dZBLEdr(self.r_outer, a) + (self.r_outer - self.r_inner) * self._d2ZBLEdr2(self.r_outer, a)) / (
+                    self.r_outer - self.r_inner) ** 2
+        if r > self.r_outer:
+            return 0
+        if r < self.r_inner:
+            return zizj * (C)
+        else:
+            return zizj * (self._ZBLE(r, a) + (1 / 3.) * (A) * (r - self.r_inner) ** 3 + (1 / 4.) * (B) * (
+                        r - self.r_inner) ** 4 + C)
+
+
