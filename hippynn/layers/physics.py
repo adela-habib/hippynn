@@ -333,15 +333,27 @@ class ZBLPotential(torch.nn.Module):
                     self.r_outer - self.r_inner) ** 3
         A = (-3 * self._dZBLEdr(self.r_outer, a) + (self.r_outer - self.r_inner) * self._d2ZBLEdr2(self.r_outer, a)) / (
                     self.r_outer - self.r_inner) ** 2
-
-        if r > self.r_outer:
-            return 0, 0
-        if r < self.r_inner:
-            en_output = zizj * (C)
-            return en_output
-        else:
-            en_output = zizj * (self._ZBLE(r, a) + (1 / 3.) * (A) * (r - self.r_inner) ** 3 + (1 / 4.) * (B) * (
+        option_0 = torch.zeros_like(r)
+        option_1 = zizj * (C)
+        option_2 = zizj * (self._ZBLE(r, a) + (1 / 3.) * (A) * (r - self.r_inner) ** 3 + (1 / 4.) * (B) * (
                         r - self.r_inner) ** 4 + C)
-            return en_output
+        output = torch.where(r>self.r_outer,
+                    option_0,
+                    torch.where(r<self.r_inner,
+                                option_1,
+                                option_2,
+                                )
+                             )
+        return output
+       # output
+       #  if r > self.r_outer:
+       #      return 0, 0
+       #  if r < self.r_inner:
+       #      en_output = zizj * (C)
+       #      return en_output
+       #  else:
+       #      en_output = zizj * (self._ZBLE(r, a) + (1 / 3.) * (A) * (r - self.r_inner) ** 3 + (1 / 4.) * (B) * (
+       #                  r - self.r_inner) ** 4 + C)
+       #      return en_output
 
 
