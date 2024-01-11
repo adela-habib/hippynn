@@ -337,14 +337,15 @@ class ZBLPotential(torch.nn.Module):
         option_1 = zizj * (C)
         option_2 = zizj * (self._ZBLE(r, a) + (1 / 3.) * (A) * (r - self.r_inner) ** 3 + (1 / 4.) * (B) * (
                         r - self.r_inner) ** 4 + C)
-        output = torch.where(r>self.r_outer,
+        pair_output = torch.where(r>self.r_outer,
                     option_0,
                     torch.where(r<self.r_inner,
                                 option_1,
                                 option_2,
                                 )
                              )
-        return output
+        atom_output = torch.tensor.index_add(torch.zeros(species.shape),0,pair_first) # check me!!!!! is it right?
+        return pair_output, atom_output
        # output
        #  if r > self.r_outer:
        #      return 0, 0
