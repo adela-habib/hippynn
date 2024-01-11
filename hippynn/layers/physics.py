@@ -274,7 +274,7 @@ class CombineEnergy(torch.nn.Module):
 
 class ZBLPotential(torch.nn.Module):
     expo_a = 0.23
-    a0 = 0.46850;
+    a0 = 0.46850
     coeff = torch.tensor([0.02817, 0.28022, 0.50986, 0.18175])  # for phi(xij/a)
     expo = torch.tensor([0.20162, 0.40290, 0.94229, 3.19980])
 
@@ -343,8 +343,8 @@ class ZBLPotential(torch.nn.Module):
                                 option_2,
                                 )
                              )
-        atom_output = torch.tensor.index_add_(0, pair_first, torch.zeros(species.shape)) # check me!!!!! is it right?
-        return pair_output , atom_output
+        #atom_output = torch.tensor.index_add_(0, pair_first, torch.zeros(species.shape)) # check me!!!!! is it right?
+        return pair_output# , atom_output
        # output
        #  if r > self.r_outer:
        #      return 0, 0
