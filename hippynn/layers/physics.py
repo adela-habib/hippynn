@@ -318,8 +318,8 @@ class ZBLPotential(torch.nn.Module):
 
     def forward(self, r, pair_first, pair_second, species):#r, zi, zj):
         # construct zi an d zj
-        zi = species[pair_first]
-        zj = species[pair_second]
+        zi = species[pair_first].squeeze()
+        zj = species[pair_second].squeeze()
         print("VICTORY",r.shape,zi.shape,zj.shape)
         # e*e/(4*pi*epsilon0)  =  14.399645478425668  eV/Ang #1.112 650 055 45 x 10-10 F/m
         prefixConst = 14.399645478425668
