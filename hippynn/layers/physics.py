@@ -343,7 +343,8 @@ class ZBLPotential(torch.nn.Module):
                                 option_2,
                                 )
                              )
-        atom_output = pair_output.index_add_(0, pair_first, torch.zeros(species.shape)) # check me!!!!! is it right?
+        atom_output = torch.zeros(species.shape)
+        atom_output.index_add_(0, pair_first, pair_output)
         return pair_output , atom_output
        # output
        #  if r > self.r_outer:
