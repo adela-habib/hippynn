@@ -355,7 +355,7 @@ class CombineEnergyNode(Energies, AutoKw, ExpandParents, MultiNode):
         parents = self.expand_parents(parents, **kwargs)
         super().__init__(name, parents=parents, module=module, **kwargs)
 
-class ZBLPotentialNode(ExpandParents, AutoKw, MultiNode, Energies):
+class ZBLPotentialNode(ExpandParents, AutoKw, MultiNode):#, Energies):
     _input_names = "pair_dist", "pair_first", "pair_second", "species"
     _output_names = "pair_energies",#, "atom_energies",#, "forces"
     _auto_module_class = physics_layers.ZBLPotential
