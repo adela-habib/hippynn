@@ -272,7 +272,6 @@ class CombineEnergy(torch.nn.Module):
         
         return mol_energy, total_atom_energy
 
-####TODO ZBLPotential
 class ZBLPotential(torch.nn.Module):
     expo_a = 0.23
     a0 = 0.46850;
@@ -344,8 +343,8 @@ class ZBLPotential(torch.nn.Module):
                                 option_2,
                                 )
                              )
-        atom_output = torch.tensor.index_add(torch.zeros(species.shape),0,pair_first) # check me!!!!! is it right?
-        return pair_output, atom_output
+        #atom_output = torch.tensor.index_add(torch.zeros(species.shape),0,pair_first) # check me!!!!! is it right?
+        return pair_output#, atom_output
        # output
        #  if r > self.r_outer:
        #      return 0, 0
