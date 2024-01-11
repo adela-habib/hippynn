@@ -363,7 +363,7 @@ class ZBLPotentialNode(ExpandParents, AutoKw, MultiNode):
 
     @_parent_expander.match(PairIndexer, SpeciesNode)
     def expansion(self, pairfinder, species, **kwargs):
-        return pairfinder.pair_distflat2, pairfinder.pair_first, pairfinder.pair_second, species
+        return pairfinder.pair_dist, pairfinder.pair_first, pairfinder.pair_second, species
 
     def __init__(self, name, parents, r_inner, r_outer, module="auto"):
         self.module_kwargs = {
