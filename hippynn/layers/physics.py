@@ -316,7 +316,11 @@ class ZBLPotential(torch.nn.Module):
         dPhi2 = self._d2Phidr2(r, a)
         return 1 / (r) * ((+2 / r ** 2) * Phi - (2 / r * dPhi) + dPhi2)
 
-    def forward(self, r, zi, zj):
+    def forward(self, r, pair_first, pair_second, species):#r, zi, zj):
+        # construct zi an d zj
+        zi = species[pair_first]
+        zj = species[pair_second]
+        print("VICTORY")
         # e*e/(4*pi*epsilon0)  =  14.399645478425668  eV/Ang #1.112 650 055 45 x 10-10 F/m
         prefixConst = 14.399645478425668
         zizj = prefixConst * zi * zj
@@ -329,12 +333,15 @@ class ZBLPotential(torch.nn.Module):
                     self.r_outer - self.r_inner) ** 3
         A = (-3 * self._dZBLEdr(self.r_outer, a) + (self.r_outer - self.r_inner) * self._d2ZBLEdr2(self.r_outer, a)) / (
                     self.r_outer - self.r_inner) ** 2
+
         if r > self.r_outer:
-            return 0
+            return 0, 0
         if r < self.r_inner:
-            return zizj * (C)
+            en_output = zizj * (C)
+            return en_output
         else:
-            return zizj * (self._ZBLE(r, a) + (1 / 3.) * (A) * (r - self.r_inner) ** 3 + (1 / 4.) * (B) * (
+            en_output = zizj * (self._ZBLE(r, a) + (1 / 3.) * (A) * (r - self.r_inner) ** 3 + (1 / 4.) * (B) * (
                         r - self.r_inner) ** 4 + C)
+            return en_output
 
 

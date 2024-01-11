@@ -31,6 +31,7 @@ class DefaultNetworkExpansion(ExpandParents):
 
         :return: (padding_indexer, pairfinder)
         """
+        # first see if there is a pair indexer and try to re-use it. check if it is periodic and agrees w/e keyword periodic
         if periodic:
             assert isinstance(cell, CellNode), "Periodic networks require a cell input"
             pair_parents = (positions, encoder, pidxer, cell)

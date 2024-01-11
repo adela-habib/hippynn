@@ -356,14 +356,14 @@ class CombineEnergyNode(Energies, AutoKw, ExpandParents, MultiNode):
         super().__init__(name, parents=parents, module=module, **kwargs)
 
 class ZBLPotentialNode(ExpandParents, AutoKw, MultiNode):
-    _input_names = "pair_dist", "pair_first", "pair_second"
+    _input_names = "pair_dist", "pair_first", "pair_second", "species"
     _output_names = "zbl", "forces"
     _auto_module_class = physics_layers.ZBLPotential
     _output_index_states = IdxType.Pair, IdxType.Pair # I think?
 
     @_parent_expander.match(PairIndexer, SpeciesNode)
     def expansion(self, pairfinder, species, **kwargs):
-        return pairfinder.pair_dist, pairfinder.pair_first, pairfinder.pair_second, species
+        return pairfinder.pair_distflat2, pairfinder.pair_first, pairfinder.pair_second, species
 
     def __init__(self, name, parents, r_inner, r_outer, module="auto"):
         self.module_kwargs = {
