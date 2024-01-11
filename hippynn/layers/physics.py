@@ -316,7 +316,7 @@ class ZBLPotential(torch.nn.Module):
         return 1 / (r) * ((+2 / r ** 2) * Phi - (2 / r * dPhi) + dPhi2)
 
     def forward(self, r, pair_first, pair_second, species):#r, zi, zj):
-        # construct zi an d zj
+        # construct zi and zj
         zi = species[pair_first].squeeze()
         zj = species[pair_second].squeeze()
         print("VICTORY",r.shape,zi.shape,zj.shape)
@@ -343,8 +343,8 @@ class ZBLPotential(torch.nn.Module):
                                 option_2,
                                 )
                              )
-        #atom_output = torch.tensor.index_add(torch.zeros(species.shape),0,pair_first) # check me!!!!! is it right?
-        return pair_output#, atom_output
+        atom_output = torch.tensor.index_add(torch.zeros(species.shape),0,pair_first) # check me!!!!! is it right?
+        return pair_output , atom_output
        # output
        #  if r > self.r_outer:
        #      return 0, 0
