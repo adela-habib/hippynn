@@ -343,7 +343,7 @@ class ZBLPotential(torch.nn.Module):
                                 option_2,
                                 )
                              )
-        atom_output = torch.zeros(species.shape)
+        atom_output = torch.zeros(species.shape, device=pair_output.device, dtype=pair_output.dtype)
         atom_output.index_add_(0, pair_first, pair_output)
         return pair_output , atom_output
        # output
