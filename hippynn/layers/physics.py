@@ -320,7 +320,7 @@ class ZBLPotential(torch.nn.Module):
         # construct zi an d zj
         zi = species[pair_first]
         zj = species[pair_second]
-        print("VICTORY")
+        print("VICTORY",r.shape,zi.shape,zj.shape)
         # e*e/(4*pi*epsilon0)  =  14.399645478425668  eV/Ang #1.112 650 055 45 x 10-10 F/m
         prefixConst = 14.399645478425668
         zizj = prefixConst * zi * zj
