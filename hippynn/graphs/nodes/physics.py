@@ -357,7 +357,7 @@ class CombineEnergyNode(Energies, AutoKw, ExpandParents, MultiNode):
 
 class ZBLPotentialNode(ExpandParents, AutoKw, MultiNode):
     _input_names = "pair_dist", "pair_first", "pair_second", "species"
-    _output_names = "zbl", "forces"
+    _output_names = "zbl"
     _auto_module_class = physics_layers.ZBLPotential
     _output_index_states = IdxType.Pair, IdxType.Pair # I think?
 
