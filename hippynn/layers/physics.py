@@ -286,51 +286,51 @@ class ZBLPotential(torch.nn.Module):
     def _Phi(self, r, a):
         phi = 0
         for i in range((self.coeff).shape[0]):
-            phi += self.coeff[i] * torch.exp(-self.expo[i] * r / a)
+            phi += self.coeff[i] * torch.exp(-self.expo[i] * r/a)
         return phi
 
     def _dPhidr(self, r, a):
         dPhir = 0
         for i in range((self.coeff).shape[0]):
-            dPhir += (self.coeff[i] * (-self.expo[i] / a) * torch.exp(-self.expo[i] * r / a))
+            dPhir += (self.coeff[i] * (-self.expo[i]/a) * torch.exp(-self.expo[i] * r/a))
         return dPhir
 
     def _d2Phidr2(self, r, a):
         dPhir2 = 0
         for i in range((self.coeff).shape[0]):
-            dPhir2 += (self.coeff[i] * ((self.expo[i] / a) ** 2) * torch.exp(-self.expo[i] * r / a))
+            dPhir2 += (self.coeff[i] * ((self.expo[i]/a) ** 2) * torch.exp(-self.expo[i] * r/a))
         return dPhir2
 
     def _ZBLE(self, r, a):
-        return (1 / r) * (self._Phi(r, a))
+        return (1/r) * (self._Phi(r, a))
 
     def _dZBLEdr(self, r, a):
         Phi = self._Phi(r, a)
         dPhi = self._dPhidr(r, a)
-        return 1 / r * (-Phi / r + dPhi)
+        return 1/r * (-Phi/r + dPhi)
 
     def _d2ZBLEdr2(self, r, a):
         Phi = self._Phi(r, a)
         dPhi = self._dPhidr(r, a)
         dPhi2 = self._d2Phidr2(r, a)
-        return 1 / (r) * ((+2 / r ** 2) * Phi - (2 / r * dPhi) + dPhi2)
+        return (1/r) * (dPhi2 + 2*dPhi*(1./r) + 2*Phi*(1./r)**2)# (+2/r**2) * Phi - (2/r * dPhi))
 
     def forward(self, r, pair_first, pair_second, species):#r, zi, zj):
-        #construct zi and zj
+        #Construct zi and zj
         zi = species[pair_first].squeeze()
         zj = species[pair_second].squeeze()
         #print("VICTORY",r.shape,zi.shape,zj.shape)
-        # e*e/(4*pi*epsilon0)  =  14.399645478425668  eV/Ang #1.112 650 055 45 x 10-10 F/m
-        prefixConst = 14.399645478425668
+
+        prefixConst = 14.399645478425668 #e*e/(4*pi*epsilon0)  =  14.399645478425668  eV/Ang #1.112 650 055 45 x 10-10 F/m
         zizj = prefixConst * zi * zj
         a = self.a0 / (zi ** self.expo_a + zj ** self.expo_a)
 
-        #make the switching function coeffs
+        #Cake the switching function coeffs
         tc = self.r_outer - self.r_inner
         C = -self._ZBLE(self.r_outer, a) + (tc/2.) * self._dZBLEdr(self.r_outer, a) - (1/12.) * (tc ** 2) * self._d2ZBLEdr2(self.r_outer, a)
         B = (2.0 * self._dZBLEdr(self.r_outer, a) - tc * self._d2ZBLEdr2(self.r_outer, a)) / tc ** 3
         A = (-3.0 * self._dZBLEdr(self.r_outer, a) + tc * self._d2ZBLEdr2(self.r_outer, a)) / tc ** 2
-        #
+        #Consider different conditions
         option_0 = torch.zeros_like(r)
         option_1 = zizj * C
         option_2 = zizj * (self._ZBLE(r, a) + (1/3.) * (A) * (r - self.r_inner) ** 3 + (1/4.) * (B) * (
