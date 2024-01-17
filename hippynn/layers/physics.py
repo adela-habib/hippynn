@@ -313,7 +313,7 @@ class ZBLPotential(torch.nn.Module):
         Phi = self._Phi(r, a)
         dPhi = self._dPhidr(r, a)
         dPhi2 = self._d2Phidr2(r, a)
-        return (1/r) * (dPhi2 + 2.0*dPhi*(1./r) + 2.0*Phi*(1./r)**2)
+        return (1/r) * (dPhi2 - 2.0*dPhi*(1./r) + 2.0*Phi*(1./r)**2)
 
     def forward(self, r, pair_first, pair_second, species):#r, zi, zj):
         #Construct zi and zj
