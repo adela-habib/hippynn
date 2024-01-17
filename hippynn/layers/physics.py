@@ -316,33 +316,32 @@ class ZBLPotential(torch.nn.Module):
         return 1 / (r) * ((+2 / r ** 2) * Phi - (2 / r * dPhi) + dPhi2)
 
     def forward(self, r, pair_first, pair_second, species):#r, zi, zj):
-        # construct zi and zj
+        #construct zi and zj
         zi = species[pair_first].squeeze()
         zj = species[pair_second].squeeze()
         #print("VICTORY",r.shape,zi.shape,zj.shape)
         # e*e/(4*pi*epsilon0)  =  14.399645478425668  eV/Ang #1.112 650 055 45 x 10-10 F/m
-        prefixConst = 14.399645478425668
+        prefixConst = 1 #14.399645478425668
         zizj = prefixConst * zi * zj
         a = self.a0 / (zi ** self.expo_a + zj ** self.expo_a)
 
-        # make the switching function
-        C = -self._ZBLE(self.r_outer, a) + 0.5 * (self.r_outer - self.r_inner) * self._dZBLEdr(self.r_outer, a) - (
-                    1 / 12.) * ((self.r_outer - self.r_inner) ** 2) * self._d2ZBLEdr2(self.r_outer, a)
-        B = (2 * self._dZBLEdr(self.r_outer, a) - (self.r_outer - self.r_inner) * self._d2ZBLEdr2(self.r_outer, a)) / (
-                    self.r_outer - self.r_inner) ** 3
-        A = (-3 * self._dZBLEdr(self.r_outer, a) + (self.r_outer - self.r_inner) * self._d2ZBLEdr2(self.r_outer, a)) / (
-                    self.r_outer - self.r_inner) ** 2
+        #make the switching function coeffs
+        tc = self.r_outer - self.r_inner
+        C = -self._ZBLE(self.r_outer, a) + (tc/2.) * self._dZBLEdr(self.r_outer, a) - (1/12.) * (tc ** 2) * self._d2ZBLEdr2(self.r_outer, a)
+        B = (2.0 * self._dZBLEdr(self.r_outer, a) - tc * self._d2ZBLEdr2(self.r_outer, a)) / tc ** 3
+        A = (-3.0 * self._dZBLEdr(self.r_outer, a) + tc * self._d2ZBLEdr2(self.r_outer, a)) / tc ** 2
+        #
         option_0 = torch.zeros_like(r)
-        option_1 = zizj * (C)
-        option_2 = zizj * (self._ZBLE(r, a) + (1 / 3.) * (A) * (r - self.r_inner) ** 3 + (1 / 4.) * (B) * (
+        option_1 = zizj * C
+        option_2 = zizj * (self._ZBLE(r, a) + (1/3.) * (A) * (r - self.r_inner) ** 3 + (1/4.) * (B) * (
                         r - self.r_inner) ** 4 + C)
         pair_output = torch.where(r>self.r_outer,
-                    option_0,
-                    torch.where(r<self.r_inner,
-                                option_1,
-                                option_2,
+                                option_0,
+                                torch.where(r<self.r_inner,
+                                            option_1,
+                                            option_2,
+                                            )
                                 )
-                             )
         atom_output = torch.zeros(species.shape[0], device=pair_output.device, dtype=pair_output.dtype)
         atom_output.index_add_(0, pair_first, pair_output)
         return pair_output , atom_output
