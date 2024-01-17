@@ -298,7 +298,7 @@ class ZBLPotential(torch.nn.Module):
     def _d2Phidr2(self, r, a):
         dPhir2 = 0
         for i in range((self.coeff).shape[0]):
-            dPhir2 += (self.coeff[i] * ((self.expo[i]/a) ** 2) * torch.exp(-self.expo[i] * r/a))
+            dPhir2 += (self.coeff[i] * ((self.expo[i]/a)**2) * torch.exp(-self.expo[i] * r/a))
         return dPhir2
 
     def _ZBLE(self, r, a):
@@ -313,7 +313,7 @@ class ZBLPotential(torch.nn.Module):
         Phi = self._Phi(r, a)
         dPhi = self._dPhidr(r, a)
         dPhi2 = self._d2Phidr2(r, a)
-        return (1/r) * (dPhi2 + 2*dPhi*(1./r) + 2*Phi*(1./r)**2)# (+2/r**2) * Phi - (2/r * dPhi))
+        return (1/r) * (dPhi2 - 2.0*dPhi*(1./r) + 2.0*Phi*(1./r)**2) # (+2/r**2) * Phi - (2/r * dPhi))
 
     def forward(self, r, pair_first, pair_second, species):#r, zi, zj):
         #Construct zi and zj
