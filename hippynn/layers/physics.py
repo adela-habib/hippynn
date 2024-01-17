@@ -313,7 +313,7 @@ class ZBLPotential(torch.nn.Module):
         Phi = self._Phi(r, a)
         dPhi = self._dPhidr(r, a)
         dPhi2 = self._d2Phidr2(r, a)
-        return (1/r) * (dPhi2 - 2.0*dPhi*(1./r) + 2.0*Phi*(1./r)**2) # (+2/r**2) * Phi - (2/r * dPhi))
+        return (1/r) * (dPhi2 + 2.0*dPhi*(1./r) + 2.0*Phi*(1./r)**2)
 
     def forward(self, r, pair_first, pair_second, species):#r, zi, zj):
         #Construct zi and zj
@@ -326,15 +326,14 @@ class ZBLPotential(torch.nn.Module):
         a = self.a0 / (zi ** self.expo_a + zj ** self.expo_a)
 
         #Cake the switching function coeffs
-        tc = self.r_outer - self.r_inner
+        tc = self.r_outer-self.r_inner
         C = -self._ZBLE(self.r_outer, a) + (tc/2.) * self._dZBLEdr(self.r_outer, a) - (1/12.) * (tc ** 2) * self._d2ZBLEdr2(self.r_outer, a)
         B = (2.0 * self._dZBLEdr(self.r_outer, a) - tc * self._d2ZBLEdr2(self.r_outer, a)) / tc ** 3
         A = (-3.0 * self._dZBLEdr(self.r_outer, a) + tc * self._d2ZBLEdr2(self.r_outer, a)) / tc ** 2
         #Consider different conditions
         option_0 = torch.zeros_like(r)
         option_1 = zizj * C
-        option_2 = zizj * (self._ZBLE(r, a) + (1/3.) * (A) * (r - self.r_inner) ** 3 + (1/4.) * (B) * (
-                        r - self.r_inner) ** 4 + C)
+        option_2 = zizj * (self._ZBLE(r, a) + (A/3.) * (r-self.r_inner) ** 3 + (B/4.0) * (r-self.r_inner) ** 4 + C)
         pair_output = torch.where(r>self.r_outer,
                                 option_0,
                                 torch.where(r<self.r_inner,
@@ -344,16 +343,6 @@ class ZBLPotential(torch.nn.Module):
                                 )
         atom_output = torch.zeros(species.shape[0], device=pair_output.device, dtype=pair_output.dtype)
         atom_output.index_add_(0, pair_first, pair_output)
-        return pair_output , atom_output
-       # output
-       #  if r > self.r_outer:
-       #      return 0, 0
-       #  if r < self.r_inner:
-       #      en_output = zizj * (C)
-       #      return en_output
-       #  else:
-       #      en_output = zizj * (self._ZBLE(r, a) + (1 / 3.) * (A) * (r - self.r_inner) ** 3 + (1 / 4.) * (B) * (
-       #                  r - self.r_inner) ** 4 + C)
-       #      return en_output
+        return pair_output, atom_output
 
 
