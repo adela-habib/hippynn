@@ -321,7 +321,7 @@ class ZBLPotential(torch.nn.Module):
         zj = species[pair_second].squeeze()
         #print("VICTORY",r.shape,zi.shape,zj.shape)
         # e*e/(4*pi*epsilon0)  =  14.399645478425668  eV/Ang #1.112 650 055 45 x 10-10 F/m
-        prefixConst = 1 #14.399645478425668
+        prefixConst = 14.399645478425668
         zizj = prefixConst * zi * zj
         a = self.a0 / (zi ** self.expo_a + zj ** self.expo_a)
 
