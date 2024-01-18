@@ -274,7 +274,7 @@ class CombineEnergy(torch.nn.Module):
 
 class ZBLPotential(torch.nn.Module):
     expo_a = 0.23
-    a0 = 0.46850
+    a0 = 0.46850 #in Angstrom
     coeff = torch.tensor([0.02817, 0.28022, 0.50986, 0.18175])  # for phi(xij/a)
     expo = torch.tensor([0.20162, 0.40290, 0.94229, 3.19980])
 
@@ -321,9 +321,9 @@ class ZBLPotential(torch.nn.Module):
         zj = species[pair_second].squeeze()
         #print("VICTORY",r.shape,zi.shape,zj.shape)
 
-        prefixConst = 14.399645478425668 #e*e/(4*pi*epsilon0)  =  14.399645478425668  eV/Ang #1.112 650 055 45 x 10-10 F/m
+        prefixConst = 14.399645478425668 #e*e/(4*pi*epsilon0)  =  14.399645478425668  eV.Ang #print(1.602176634*1e-19/(1.11265005545*1e-20))
         zizj = prefixConst * zi * zj
-        a = ((self.a0)/1.8897268777743552) / (zi ** self.expo_a + zj ** self.expo_a)
+        a = (self.a0) / (zi ** self.expo_a + zj ** self.expo_a)
 
         #Cake the switching function coeffs
         tc = self.r_outer-self.r_inner
