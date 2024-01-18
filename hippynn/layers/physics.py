@@ -273,31 +273,30 @@ class CombineEnergy(torch.nn.Module):
         return mol_energy, total_atom_energy
 
 class ZBLPotential(torch.nn.Module):
-    expo_a = 0.23
-    a0 = 0.46850 #in Angstrom
-    coeff = torch.tensor([0.02817, 0.28022, 0.50986, 0.18175])  # for phi(xij/a)
-    expo = torch.tensor([0.20162, 0.40290, 0.94229, 3.19980])
-
     def __init__(self, r_inner, r_outer):
         super().__init__()
+        self.expo_a = 0.23
+        self.a0 = 0.46850  # in Angstrom
+        self.coeff = [0.02817, 0.28022, 0.50986, 0.18175]  # for phi(xij/a)
+        self.expo = [0.20162, 0.40290, 0.94229, 3.19980]
         self.r_inner = r_inner
         self.r_outer = r_outer
 
     def _Phi(self, r, a):
         phi = 0
-        for i in range((self.coeff).shape[0]):
+        for i in range(len(self.coeff)):
             phi += self.coeff[i] * torch.exp(-self.expo[i] * r/a)
         return phi
 
     def _dPhidr(self, r, a):
         dPhir = 0
-        for i in range((self.coeff).shape[0]):
+        for i in range(len(self.coeff)):
             dPhir += (self.coeff[i] * (-self.expo[i]/a) * torch.exp(-self.expo[i] * r/a))
         return dPhir
 
     def _d2Phidr2(self, r, a):
         dPhir2 = 0
-        for i in range((self.coeff).shape[0]):
+        for i in range(len(self.coeff)):
             dPhir2 += (self.coeff[i] * ((self.expo[i]/a)**2) * torch.exp(-self.expo[i] * r/a))
         return dPhir2
 
@@ -315,11 +314,10 @@ class ZBLPotential(torch.nn.Module):
         dPhi2 = self._d2Phidr2(r, a)
         return (1/r) * (dPhi2 - 2.0*dPhi*(1./r) + 2.0*Phi*(1./r)**2)
 
-    def forward(self, r, pair_first, pair_second, species):#r, zi, zj):
+    def forward(self, r, pair_first, pair_second, species):
         #Construct zi and zj
         zi = species[pair_first].squeeze()
         zj = species[pair_second].squeeze()
-        #print("VICTORY",r.shape,zi.shape,zj.shape)
 
         prefixConst = 14.399645478425668 #e*e/(4*pi*epsilon0)  =  14.399645478425668  eV.Ang #print(1.602176634*1e-19/(1.11265005545*1e-20))
         zizj = prefixConst * zi * zj
@@ -343,6 +341,7 @@ class ZBLPotential(torch.nn.Module):
                                 )
         atom_output = torch.zeros(species.shape[0], device=pair_output.device, dtype=pair_output.dtype)
         atom_output.index_add_(0, pair_first, pair_output)
+        print("VICTORY",r.shape,zi.shape,zj.shape, pair_output.shape)
         return pair_output, atom_output
 
 
