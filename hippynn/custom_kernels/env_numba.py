@@ -1,15 +1,26 @@
 """
 Numba implementation of envsum operations.
 """
+# Dev note for the future: Do not attempt the `atexit` call:
+# >>> atexit.register(numba.cuda.close)
+# Causes segfault on program exit on some systems.
+# Probably due to both numba and torch trying to finalize the GPU.
+# Leaving this note here in case anyone is tempted to try it in the future.
+# (At one point in history, this was the right strategy.)
+import warnings
+import torch
 import numba
 import numba.cuda
 import numpy as np
 
 from .utils import resort_pairs_cached
 from .tensor_wrapper import via_numpy, NumbaCompatibleTensorFunction
+from .registry import MessagePassingKernels
 
-# Very basic implementation.
-# While simple, it beats a set of pytorch operations simply by using far less memory.
+if not numba.cuda.is_available():
+    if torch.cuda.is_available():
+        warnings.warn("Numba is installed but numba.cuda.is_available() returned False. "
+                      "Custom kernels will most likely fail on GPU tensors. ")
 
 # conventions:
 # pidx  : index of pair
@@ -17,7 +28,6 @@ from .tensor_wrapper import via_numpy, NumbaCompatibleTensorFunction
 # psidx : index of second atom in pair (sender)
 # fidx  : index of feature
 # nidx  : index of sensitivity (nu)
-
 
 # Kernel which sums sensitivities and features to get environment.
 # Numpy core signature: (p,n),(a,f),(p),(p),(a,n,f)
@@ -38,6 +48,8 @@ class WrappedEnvsum(NumbaCompatibleTensorFunction):
     def launch_bounds(self, sense_shape, fs, pfs, pss, atom1_ids_shape, *other_shapes):
         n_pairs, n_nu = sense_shape
         n_atom, n_feat = fs
+        if n_feat > 512:
+            raise ValueError(f"Numba GPU custom kernels are not compatible with feature sizes greater than 512 (got {n_feat})")
         (n_atoms_interacting,) = atom1_ids_shape
         TPB_MAX = 512
         TPB_X = n_feat
@@ -50,9 +62,7 @@ class WrappedEnvsum(NumbaCompatibleTensorFunction):
 
     @staticmethod
     def make_kernel(KERNEL_DTYPE):
-        sig = "void({DTYPE}[:,:,],{DTYPE}[:,:],int64[:],int64[:],int64[:],int64[:],{DTYPE}[:,:,:])".format(
-            DTYPE=KERNEL_DTYPE
-        )
+        sig = "void({DTYPE}[:,:,],{DTYPE}[:,:],int64[:],int64[:],int64[:],int64[:],{DTYPE}[:,:,:])".format(DTYPE=KERNEL_DTYPE)
 
         @numba.cuda.jit(
             sig,
@@ -121,11 +131,14 @@ class WrappedSensesum(NumbaCompatibleTensorFunction):
     def launch_bounds(self, env_shape, feat_shape, pfirst_shape, psecond_shape):
         (n_pairs,) = pfirst_shape
         n_atoms, n_nu, n_feat = env_shape
+        if n_nu > 512:
+            raise ValueError(f"Numba GPU custom kernels are not compatible with sensitivity sizes greater than 512 (got {n_nu})")
+
         TPB_MAX = 512
         TPB_Y = n_nu
-        TPB_X = TPB_MAX//TPB_Y
-        TPB = (TPB_X,TPB_Y)
-        BPG = (n_pairs + TPB_X -1 )//TPB_X
+        TPB_X = TPB_MAX // TPB_Y
+        TPB = (TPB_X, TPB_Y)
+        BPG = (n_pairs + TPB_X - 1) // TPB_X
         return BPG, TPB
 
     @staticmethod
@@ -193,6 +206,8 @@ class WrappedFeatsum(NumbaCompatibleTensorFunction):
         n_pairs, n_nu = sense_shape
         n_atom, n_nu, n_feat = env_shape
         TPB_max = 512
+        if n_feat > 512:
+            raise ValueError(f"Numba GPU custom kernels are not compatible with feature sizes greater than 512 (got {n_feat})")
         if n_feat > 32:
             TPB_x = ((n_feat + 31) // 32) * 32
             TPB_y = TPB_max // TPB_x
@@ -209,9 +224,7 @@ class WrappedFeatsum(NumbaCompatibleTensorFunction):
 
     @staticmethod
     def make_kernel(KERNEL_DTYPE):
-        sig = "void({DTYPE}[:,:,:],{DTYPE}[:,:],int64[:],int64[:],int64[:],int64[:],{DTYPE}[:,:])".format(
-            DTYPE=KERNEL_DTYPE
-        )
+        sig = "void({DTYPE}[:,:,:],{DTYPE}[:,:],int64[:],int64[:],int64[:],int64[:],{DTYPE}[:,:])".format(DTYPE=KERNEL_DTYPE)
 
         @numba.cuda.jit(
             sig,
@@ -278,3 +291,10 @@ class WrappedFeatsum(NumbaCompatibleTensorFunction):
 new_envsum = WrappedEnvsum()
 new_sensesum = WrappedSensesum()
 new_featsum = WrappedFeatsum()
+
+numba_kernels = MessagePassingKernels(
+    "numba",
+    new_envsum,
+    new_sensesum,
+    new_featsum,
+)

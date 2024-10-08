@@ -21,6 +21,24 @@ class ListMod(torch.nn.Module):
         return [x.to(torch.get_default_dtype()) for x in features]
 
 
+class _WeightedLoss(torch.nn.Module):
+    loss_func = None
+
+    def forward(self, pred, true, weights):
+        unweighted_loss = self.loss_func(pred, true, reduction='none')
+        normalized_weights = weights/torch.mean(weights)
+        weighted_loss = (normalized_weights*unweighted_loss).mean()
+        return weighted_loss
+
+
+class WeightedMSELoss(_WeightedLoss):
+    loss_func = staticmethod(torch.nn.functional.mse_loss)
+
+
+class WeightedMAELoss(_WeightedLoss):
+    loss_func = staticmethod(torch.nn.functional.l1_loss)
+
+
 class AtLeast2D(torch.nn.Module):
     def forward(self, item):
         if item.ndimension() == 1:
@@ -56,3 +74,12 @@ class Idx(torch.nn.Module):
 
     def forward(self, bundled_inputs):
         return bundled_inputs[self.index]
+
+class EnsembleTarget(torch.nn.Module):
+    def forward(self,*input_tensors):
+        n_members = len(input_tensors)
+
+        all = torch.stack(input_tensors, dim=1)
+        mean = torch.mean(all, dim=1)
+        std = torch.std(all, dim=1)
+        return mean, std, all

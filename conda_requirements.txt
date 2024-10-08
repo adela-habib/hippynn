@@ -1,5 +1,6 @@
 numpy
-pytorch >= 1.6
+pytorch >= 2.0
+torchtriton
 matplotlib
 numba
 cupy
@@ -7,3 +8,5 @@ ase
 h5py
 tqdm
 python-graphviz
+lightning
+opt_einsum

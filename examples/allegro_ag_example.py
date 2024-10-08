@@ -20,7 +20,6 @@ Timing:
 """
 import os
 import torch
-import ase.io
 import time
 
 import hippynn
@@ -30,7 +29,7 @@ from hippynn.databases import AseDatabase
 torch.set_default_dtype(torch.float32)
 hippynn.settings.WARN_LOW_DISTANCES = False
 
-max_epochs=500
+max_epochs = 500
 
 network_params = {
     "possible_species": [0, 47],
@@ -116,8 +115,8 @@ def fit_model(training_modules,database):
 
     model, loss_module, model_evaluator = training_modules
 
-    from hippynn.pretraining import set_e0_values
-    set_e0_values(henergy, database, peratom=True, energy_name="energy_per_atom", decay_factor=1e-2)
+    from hippynn.pretraining import hierarchical_energy_initialization
+    hierarchical_energy_initialization(henergy, database, peratom=True, energy_name="energy_per_atom", decay_factor=1e-2)
 
     from hippynn.experiment.controllers import RaiseBatchSizeOnPlateau, PatienceController
 

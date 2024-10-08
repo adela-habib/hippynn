@@ -13,10 +13,6 @@ Note: It is necessary to untar the h5 data files in ani-al/data/
 before running this script.
 
 """
-import sys
-
-sys.path.append("../../datasets/ani-al/readers/lib/")
-import pyanitools  # Check if pyanitools is found early
 
 ### Loading the database
 from hippynn.databases.h5_pyanitools import PyAniDirectoryDB
@@ -59,15 +55,14 @@ plt.show()
 
 #### How to remove and separate low distance configurations
 dist_thresh = 1.7  # Note: what threshold to use may be highly problem-dependent.
-low_dist_configs = min_dist_array < dist_thresh
-where_low_dist = database.arr_dict["indices"][low_dist_configs]
+low_dist_config_mask = min_dist_array < dist_thresh
 
 # This makes the low distance configurations
 # into their own split, separate from train/valid/test.
-database.make_explicit_split("LOW_DISTANCE_FILTER", where_low_dist)
+database.make_explicit_split_bool("LOW_DISTANCE_FILTER", low_dist_config_mask)
 
 # This deletes the new split, although deleting it is not necessary;
-# this data iwll not be included in train/valid/test splits
+# this data will not be included in train/valid/test splits
 del database.splits["LOW_DISTANCE_FILTER"]
 
 ### Continue on with data processing, e.g.

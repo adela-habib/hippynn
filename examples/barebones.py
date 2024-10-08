@@ -72,9 +72,9 @@ with hippynn.tools.active_directory(netname):
         # Now that we have a database and a model, we can
         # Fit the non-interacting energies by examining the database.
         # This tends to stabilize training a lot.
-        from hippynn.pretraining import set_e0_values
+        from hippynn.pretraining import hierarchical_energy_initialization
 
-        set_e0_values(henergy, database, trainable_after=False)
+        hierarchical_energy_initialization(henergy, database, trainable_after=False)
 
         # Parameters describing the training procedure.
         from hippynn.experiment import setup_and_train
@@ -85,6 +85,7 @@ with hippynn.tools.active_directory(netname):
             optimizer=torch.optim.Adam,
             max_epochs=100,
             learning_rate=0.001,
+            #device='mps',
         )
         setup_and_train(
             training_modules=training_modules,

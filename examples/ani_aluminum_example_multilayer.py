@@ -3,7 +3,8 @@
 Example training to the ANI-aluminum dataset.
 
 This script was designed for an external dataset available at
-https://github.com/atomistic-ml/ani-al
+https://github.com/atomistic-ml/ani-al. One should download the
+entire repository.
 
 Note: It is necessary to untar the h5 data files in ani-al/data/
 before running this script.
@@ -23,8 +24,6 @@ with custom kernels -off-.
 
 import sys
 
-sys.path.append("../../datasets/ani-al/readers/lib/")
-import pyanitools  # Check if pyanitools is found early
 
 import torch
 
@@ -179,9 +178,9 @@ with hippynn.tools.active_directory(netname):
 
         # Now that we have a database and a model, we can
         # Fit the non-interacting energies by examining the database.
-        from hippynn.pretraining import set_e0_values
+        from hippynn.pretraining import hierarchical_energy_initialization
 
-        set_e0_values(henergy, database, peratom=True, energy_name="energyperatom", decay_factor=1e-2)
+        hierarchical_energy_initialization(henergy, database, peratom=True, energy_name="energyperatom", decay_factor=1e-2)
 
         from hippynn.experiment.controllers import RaiseBatchSizeOnPlateau, PatienceController
 

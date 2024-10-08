@@ -1,3 +1,17 @@
+"""
+Example training to the SNAP database for Indium Phosphide.
+
+This script was designed for an external dataset available at
+https://github.com/FitSNAP/FitSNAP
+
+For info on the dataset, see the following publication:
+Explicit Multielement Extension of the Spectral Neighbor Analysis Potential for Chemically Complex Systems
+M. A. Cusentino, M. A. Wood, and A. P. Thompson
+The Journal of Physical Chemistry A 2020 124 (26), 5456-5464
+DOI: 10.1021/acs.jpca.0c02450
+
+"""
+
 import numpy as np
 import torch
 torch.set_default_dtype(torch.float32)
@@ -138,8 +152,8 @@ with hippynn.tools.active_directory(netname):
 
         # Now that we have a database and a model, we can
         # Fit the non-interacting energies by examining the database.
-        from hippynn.pretraining import set_e0_values
-        set_e0_values(henergy, database, peratom=True, energy_name="EnergyPerAtom", decay_factor=1e-2)
+        from hippynn.pretraining import hierarchical_energy_initialization
+        hierarchical_energy_initialization(henergy, database, peratom=True, energy_name="EnergyPerAtom", decay_factor=1e-2)
         # Freeze sensitivity layers
         for sense_layer in network.torch_module.sensitivity_layers:
             sense_layer.mu.requires_grad_(False)

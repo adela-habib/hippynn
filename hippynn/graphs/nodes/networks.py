@@ -3,6 +3,7 @@ Nodes for networks.
 """
 from .tags import Encoder, PairIndexer, Network, AtomIndexer
 from .base import _BaseNode, AutoKw, ExpandParents, SingleNode
+from .base.multi import IndexNode
 from .indexers import OneHotEncoder, PaddingIndexer, acquire_encoding_padding
 from .pairs import OpenPairIndexer, PeriodicPairIndexer
 from .inputs import SpeciesNode, PositionsNode, CellNode
@@ -53,7 +54,37 @@ class DefaultNetworkExpansion(ExpandParents):
         return pidxer.indexed_features, pairfinder
 
 
-class Hipnn(DefaultNetworkExpansion, AutoKw, Network, SingleNode):
+class _FeatureNodesMixin:
+    @property
+    def feature_nodes(self):
+        if not hasattr(self, "_feature_nodes"):
+            self._make_feature_nodes()
+        return self._feature_nodes
+
+    def _make_feature_nodes(self):
+        """
+        This function can be used on a network to make nodes that refer to the individual feature blocks.
+        We use this function/class to provide backwards compatibility with models that did not have this
+        attribute when created.
+        :param self: the input network, which is modified in-place
+        :return: None
+        """
+
+        net_module = self.torch_module
+        n_interactions = net_module.ni
+
+        feature_nodes = []
+
+        index_state = IdxType.Atoms
+        parents = (self,)
+        for i in range(n_interactions + 1):
+            name = f"{self.name}_features_{i}"
+            fnode = IndexNode(name=name, parents=parents, index=i, index_state=index_state)
+            feature_nodes.append(fnode)
+        self._feature_nodes = feature_nodes
+
+
+class Hipnn(DefaultNetworkExpansion, AutoKw, Network, SingleNode, _FeatureNodesMixin):
     """
     Node for HIP-NN neural networks
     """
@@ -79,11 +110,10 @@ class Hipnn(DefaultNetworkExpansion, AutoKw, Network, SingleNode):
         parents = self.expand_parents(
             parents, species_set=net_module.species_set, dist_hard_max=net_module.dist_hard_max, periodic=periodic
         )
-
         super().__init__(name, parents, module=net_module)
 
 
-class HipnnVec(DefaultNetworkExpansion, AutoKw, Network, SingleNode):
+class HipnnVec(DefaultNetworkExpansion, AutoKw, Network, SingleNode, _FeatureNodesMixin):
     """
     Node for HIP-NN-TS neural networks, l=1
     """

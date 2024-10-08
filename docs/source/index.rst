@@ -5,27 +5,63 @@ Welcome to hippynn's documentation!
 
 We hope you enjoy your stay.
 
-What is hippynn?
-================
-
-`hippynn` is a python library for machine learning on atomistic systems.
-We aim to provide high-performance modular design so that different
-components can be re-used, extended, or added to. You can find more information
-at the :doc:`/user_guide/features` page. The development home is located
-at `the hippynn github repository`_.
-
-
-.. _`the hippynn github repository`: https://github.com/lanl/hippynn/
+.. include:: what_is_hippynn.rst
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Contents:
+    :maxdepth: 2
+    :caption: Getting Started:
 
-   How to install hippynn <installation>
-   Examples <examples/index>
-   User Guide <user_guide/index>
-   hippynn API documentation <api_documentation/hippynn>
-   license
+    what_is_hippynn
+    How to install hippynn <installation>
+    bibliography
+    license
+
+.. toctree::
+    :maxdepth: 1
+    :caption: User Guide:
+
+    user_guide/features
+    user_guide/concepts
+    user_guide/databases
+    user_guide/loss_graph
+    user_guide/units
+    user_guide/ckernels
+    user_guide/settings
+    user_guide/custom_nodes
+
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Examples:
+
+
+    examples/minimal_workflow
+    examples/controller
+    examples/plotting
+    examples/predictor
+    examples/ensembles
+    examples/periodic
+    examples/forces
+    examples/restarting
+    examples/ase_calculator
+    examples/mliap_unified
+    examples/excited_states
+    examples/weighted_loss
+    examples/lightning
+    examples/hyperopt
+
+
+..
+    Dev note: the order of this toctree controls whether :mod: and etc links
+    in the python domain point at the full documentation, or the summary.
+
+.. toctree::
+    :maxdepth: 1
+    :caption: API Documentation:
+
+    Full API Documentation <api_documentation/hippynn>
+    API Summary Pages <api_summary/hippynn>
+
 
 
 Indices and tables
